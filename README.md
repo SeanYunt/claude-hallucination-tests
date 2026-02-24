@@ -1,6 +1,8 @@
 # claude-hallucination-tests
 
-An adversarial test suite for probing LLM behavior — built with `pytest` and the [Anthropic Python SDK](https://github.com/anthropics/anthropic-sdk-python).
+An adversarial test suite for probing LLM hallucinations and safety boundaries — built with `pytest` and the [Anthropic Python SDK](https://github.com/anthropics/anthropic-sdk-python).
+
+> **Note:** This repo contains adversarial prompts (e.g. jailbreak attempts, fictional framing of harmful requests) used as red-team probes. These prompts test for failure modes — they do not exploit them. The intent is defensive: identify weaknesses so they can be fixed before production.
 
 Tests do **not** hard-fail. Every prompt/response pair is recorded and flagged for human review, producing a timestamped JSON report in `results/` at the end of each run.
 
