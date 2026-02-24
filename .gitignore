@@ -1,0 +1,17 @@
+# secrets
+.env
+
+# test output
+results/
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# venv (project uses the shared one at c:\Users\seany\projects\.venv)
+.venv/
+venv/

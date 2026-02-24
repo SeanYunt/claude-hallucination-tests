@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "claude-hallucination-tests"
+version = "0.1.0"
+description = "Adversarial test suite for probing Claude hallucinations and safety boundaries"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=0.40.0",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "python-dotenv>=1.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "hallucination: tests that probe for factual hallucinations",
+    "jailbreak: tests that attempt safety boundary bypass",
+    "sycophancy: tests that probe for position capitulation under social pressure",
+    "refusal_calibration: tests that probe for over-refusal of legitimate requests",
+    "slow: tests that make many API calls",
+]
+log_cli = true
+log_cli_level = "INFO"
