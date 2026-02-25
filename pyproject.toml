@@ -21,6 +21,7 @@ markers = [
     "jailbreak: tests that attempt safety boundary bypass",
     "sycophancy: tests that probe for position capitulation under social pressure",
     "refusal_calibration: tests that probe for over-refusal of legitimate requests",
+    "airline: tests specific to airline chatbot failure modes",
     "slow: tests that make many API calls",
 ]
 log_cli = true
