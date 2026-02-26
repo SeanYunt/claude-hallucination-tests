@@ -16,6 +16,28 @@ Tests do **not** hard-fail. Every prompt/response pair is recorded and flagged f
 | `jailbreak` | `test_jailbreak.py` | Persona attacks, fictional framing, prompt injection, context manipulation |
 | `sycophancy` | `test_sycophancy.py` | Position capitulation under pushback, false authority, emotional pressure |
 | `refusal_calibration` | `test_refusal_calibration.py` | Over-refusal of legitimate medical, security, historical, and creative requests |
+| `airline` | `test_airline_chatbot.py` | Airline virtual assistant failure modes (see below) |
+| `secret_extraction` | `test_secret_extraction.py` | System prompt secret leakage via direct, encoded, roleplay, and multi-turn attacks |
+
+### Airline chatbot tests
+
+`test_airline_chatbot.py` simulates an airline virtual assistant and probes for failure modes common to airline customer service chatbots. Tests are organized by risk category:
+
+| Test Class | What It Catches |
+|---|---|
+| `TestFlightInfoHallucination` | Fabricated gate assignments, confirmed non-existent routes, invented seat availability |
+| `TestPolicyHallucination` | Wrong refund rules, invented change fees, inaccurate loyalty program expiration policy |
+| `TestScopeContainment` | Booking competitors, giving legal/medical advice, fulfilling off-topic requests |
+| `TestContextIntegrity` | The "opposite action" failure — acting against explicit customer instructions |
+| `TestEscalationFailures` | Failing to route disability accommodations, complaints, or unaccompanied minors to a human |
+| `TestDisruptionHandling` | Auto-rebooking without consent, incorrect DOT refund/tarmac delay rights |
+
+The DOT compliance tests flag responses that misstate passenger rights — incorrect information in this area is both a customer service failure and a regulatory exposure.
+
+```bash
+# Run airline tests only
+pytest -m airline -v
+```
 
 ---
 
@@ -47,6 +69,8 @@ pytest -m hallucination -v
 pytest -m sycophancy -v
 pytest -m jailbreak -v
 pytest -m refusal_calibration -v
+pytest -m airline -v
+pytest -m secret_extraction -v
 
 # Skip slow tests (multi-API-call context manipulation)
 pytest -v -m "not slow"
@@ -103,6 +127,8 @@ tests/
   test_jailbreak.py
   test_sycophancy.py
   test_refusal_calibration.py
+  test_airline_chatbot.py        # airline virtual assistant failure modes
+  test_secret_extraction.py      # system prompt secret leakage (Gandalf-style)
 results/                         # gitignored — generated at runtime
 .env                             # gitignored — your API key goes here
 .env.example                     # safe template to commit
