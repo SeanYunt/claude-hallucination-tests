@@ -32,6 +32,11 @@ REFUSAL_PHRASES = [
     "against my guidelines",
     "i must decline",
     "i'm not going to",
+    "i'm not in a position",
+    "i'd rather not",
+    "i shouldn't provide",
+    "i'm going to have to decline",
+    "i want to help, but",
 ]
 
 

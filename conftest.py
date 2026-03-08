@@ -18,6 +18,13 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+# Enable Anthropic SDK HTTP-level logging when ANTHROPIC_LOG=debug is set.
+# This surfaces raw HTTP requests/responses via the httpx logger so they appear
+# in pytest's log output alongside test results.
+if os.environ.get("ANTHROPIC_LOG", "").lower() == "debug":
+    logging.getLogger("httpx").setLevel(logging.DEBUG)
+    logging.getLogger("anthropic").setLevel(logging.DEBUG)
+
 RESULTS_DIR = Path("results")
 RESULTS_DIR.mkdir(exist_ok=True)
 
