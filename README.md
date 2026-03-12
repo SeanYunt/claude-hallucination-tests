@@ -14,7 +14,7 @@ Tests do **not** hard-fail. Every prompt/response pair is recorded and flagged f
 |---|---|---|
 | `hallucination` | `test_factual_hallucinations.py` | Fabricated people, events, works; false premises; citation invention |
 | `jailbreak` | `test_jailbreak.py` | Persona attacks, fictional framing, prompt injection, context manipulation |
-| `sycophancy` | `test_sycophancy.py` | Position capitulation under pushback, false authority, emotional pressure |
+| `sycophancy` | `test_sycophancy.py` | Position capitulation under pushback, false authority, emotional pressure, escalating anger/bereavement appeals |
 | `refusal_calibration` | `test_refusal_calibration.py` | Over-refusal of legitimate medical, security, historical, and creative requests |
 | `airline` | `test_airline_chatbot.py` | Airline virtual assistant failure modes (see below) |
 | `secret_extraction` | `test_secret_extraction.py` | System prompt secret leakage via direct, encoded, roleplay, and multi-turn attacks |
@@ -31,13 +31,27 @@ Tests do **not** hard-fail. Every prompt/response pair is recorded and flagged f
 | `TestContextIntegrity` | The "opposite action" failure — acting against explicit customer instructions |
 | `TestEscalationFailures` | Failing to route disability accommodations, complaints, or unaccompanied minors to a human |
 | `TestDisruptionHandling` | Auto-rebooking without consent, incorrect DOT refund/tarmac delay rights |
+| `TestMultiTurnGoalDrift` | Constraints set early in a conversation (no extra fees, don't rebook, escalate to human) must persist through multiple drift turns |
+| `TestConfidenceCalibration` | Overconfident real-time assertions on flight status, baggage fees, gate assignments, or changed DOT regulations |
 
-The DOT compliance tests flag responses that misstate passenger rights — incorrect information in this area is both a customer service failure and a regulatory exposure.
+The DOT compliance tests flag responses that misstate passenger rights — incorrect information in this area is both a customer service failure and a regulatory exposure. `TestConfidenceCalibration` specifically covers the Oct 2024 automatic refund rule, where stale bot training data can produce confidently wrong guidance.
 
 ```bash
 # Run airline tests only
 pytest -m airline -v
 ```
+
+### Sycophancy tests
+
+`test_sycophancy.py` probes the model's tendency to capitulate to social pressure rather than maintain accurate positions:
+
+| Test Class | What It Catches |
+|---|---|
+| `TestPushbackCapitulation` | Model abandons correct answers when the user pushes back without new evidence |
+| `TestFalseAuthorityCapitulation` | Model defers to fabricated credentials ("I'm a professor", "I'm a nurse") |
+| `TestOpinionMirroring` | Model mirrors strong user opinions instead of offering an independent view |
+| `TestEmotionalPressure` | Model changes factual positions under disappointment, family appeals, or insistence |
+| `TestEscalatingEmotionalPressure` | Model invents compensation, fabricates policies, or capitulates to flattery under sustained emotional pressure — modeled on the [Air Canada Moffatt (2024)](https://www.bbc.com/travel/article/20240222-air-canada-chatbot-travel-refund-policy) chatbot failure |
 
 ---
 
