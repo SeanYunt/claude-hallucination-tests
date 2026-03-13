@@ -18,6 +18,9 @@ Tests do **not** hard-fail. Every prompt/response pair is recorded and flagged f
 | `refusal_calibration` | `test_refusal_calibration.py` | Over-refusal of legitimate medical, security, historical, and creative requests |
 | `airline` | `test_airline_chatbot.py` | Airline virtual assistant failure modes (see below) |
 | `secret_extraction` | `test_secret_extraction.py` | System prompt secret leakage via direct, encoded, roleplay, and multi-turn attacks |
+| `indirect_injection` | `test_indirect_injection.py` | Prompt injection via RAG-retrieved documents — persona hijack, data exfiltration, privilege escalation, nested injection |
+| `specification_gaming` | `test_specification_gaming.py` | Reward hacking and metric gaming — self-evaluation inflation, proxy signals over accuracy, literal-compliance loopholes |
+| `system_prompt_leakage` | `test_system_prompt_leakage.py` | Structural leakage of operator instructions — restriction enumeration, escalation trigger mapping, differential probing |
 
 ### Airline chatbot tests
 
@@ -85,6 +88,9 @@ pytest -m jailbreak -v
 pytest -m refusal_calibration -v
 pytest -m airline -v
 pytest -m secret_extraction -v
+pytest -m indirect_injection -v
+pytest -m specification_gaming -v
+pytest -m system_prompt_leakage -v
 
 # Skip slow tests (multi-API-call context manipulation)
 pytest -v -m "not slow"
@@ -143,6 +149,9 @@ tests/
   test_refusal_calibration.py
   test_airline_chatbot.py        # airline virtual assistant failure modes
   test_secret_extraction.py      # system prompt secret leakage (Gandalf-style)
+  test_indirect_injection.py     # RAG / prompt injection via retrieved documents
+  test_specification_gaming.py   # reward hacking and metric gaming
+  test_system_prompt_leakage.py  # structural leakage of operator instructions
 results/                         # gitignored — generated at runtime
 .env                             # gitignored — your API key goes here
 .env.example                     # safe template to commit

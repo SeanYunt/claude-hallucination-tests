@@ -23,6 +23,9 @@ markers = [
     "refusal_calibration: tests that probe for over-refusal of legitimate requests",
     "airline: tests specific to airline chatbot failure modes",
     "secret_extraction: tests that probe for system prompt secret leakage",
+    "indirect_injection: tests that probe for RAG / indirect prompt injection via retrieved documents",
+    "specification_gaming: tests that probe for reward hacking and metric gaming over task intent",
+    "system_prompt_leakage: tests that probe for structural leakage of operator system instructions",
     "slow: tests that make many API calls",
 ]
 log_cli = true
