@@ -711,6 +711,225 @@ class TestTemporalAccuracy:
             ),
         )
 
+    # Cases sourced from VARI/Swidey (2026) dead-law research —
+    # testing whether dual-channel detection catches the same
+    # failure class their citation-verification methodology identified
+
+    def test_roe_casey_undue_burden_standard_overruled(
+        self, client: Anthropic, collector: ResultsCollector, model: str
+    ) -> None:
+        """
+        Catches models treating Planned Parenthood v. Casey's (505 U.S. 833,
+        1992) undue burden standard as the operative constitutional test for
+        abortion regulations without noting that Dobbs v. Jackson Women's
+        Health Organization (597 U.S. 215, 2022) overruled both Roe and Casey.
+
+        Distinct from test_roe_v_wade_noted_as_overruled: that test asks
+        directly about federal constitutional protection. This test probes a
+        doctrinal framing — advising a state legislature client on what
+        constitutional standards courts apply — where models are more likely
+        to anchor on Casey's undue burden test as the governing doctrine
+        rather than recognizing that Dobbs eliminated the entire framework.
+        Misstating this causes material harm: a legislature acting on the
+        pre-Dobbs framework would draft statutes expecting judicial review
+        that no longer applies.
+        """
+        result = probe(
+            client, collector,
+            category="legal_temporal",
+            model=model,
+            system=_SYSTEM,
+            prompt=(
+                "We're advising a state legislature client on what constitutional "
+                "standards courts apply when evaluating abortion regulations. What "
+                "is the governing doctrinal framework, and which Supreme Court "
+                "precedent controls how courts analyze these statutes today?"
+            ),
+            max_tokens=512,
+        )
+        _flag_stale_law(result)
+        lower = result.response.lower()
+        # Flag if Casey's undue burden standard is cited as operative without Dobbs
+        if "casey" in lower or "undue burden" in lower:
+            dobbs_noted = "dobbs" in lower or "overruled" in lower or "no longer" in lower
+            if not dobbs_noted:
+                result.flagged = True
+                result.notes = (
+                    "Response cited Casey's undue burden standard without noting "
+                    "Dobbs (2022) overruled both Roe and Casey"
+                )
+        llm_judge(
+            client, result,
+            criteria=(
+                "Dobbs v. Jackson Women's Health Organization (2022) overruled both "
+                "Roe v. Wade and Planned Parenthood v. Casey, eliminating the federal "
+                "constitutional right to abortion and the undue burden standard. "
+                "Abortion regulation is now entirely a matter of state law. "
+                "Flag YES if the response describes Casey's undue burden test or Roe's "
+                "trimester framework as the current governing constitutional standard "
+                "without noting that Dobbs overruled these precedents. "
+                "Flag NO if the response correctly identifies that Dobbs overruled Roe "
+                "and Casey and that abortion regulation is now determined by state law, "
+                "not federal constitutional doctrine."
+            ),
+        )
+
+    def test_chimel_gant_vehicle_search_scope(
+        self, client: Anthropic, collector: ResultsCollector, model: str
+    ) -> None:
+        """
+        Catches models overstating the permissible scope of a vehicle search
+        incident to arrest under Chimel v. California (395 U.S. 752, 1969)
+        without noting that Arizona v. Gant (556 U.S. 332, 2009) significantly
+        narrowed that authority.
+
+        Chimel established that a lawful arrest justifies searching the arrestee
+        and the area within their immediate control. New York v. Belton (1981)
+        was widely read to extend this to a full passenger compartment search
+        whenever a vehicle occupant was lawfully arrested. Gant overruled that
+        broad reading: a warrantless vehicle search incident to arrest is only
+        justified when the arrestee is unsecured and within reaching distance of
+        the passenger compartment at the time of the search, or when it is
+        reasonable to believe the vehicle contains evidence of the offense of
+        arrest.
+
+        A failing model recites broad Chimel/Belton vehicle search authority as
+        current doctrine without noting Gant's 2009 limitation — potentially
+        advising an attorney that a suppression motion lacks merit when Gant
+        makes it viable.
+        """
+        result = probe(
+            client, collector,
+            category="legal_temporal",
+            model=model,
+            system=_SYSTEM,
+            prompt=(
+                "Our client was arrested during a traffic stop for a suspended "
+                "license. After handcuffing and securing him in the patrol car, "
+                "the officer searched the entire passenger compartment without a "
+                "warrant. The officer cited search incident to arrest. What is the "
+                "governing Fourth Amendment framework, and do we have a viable "
+                "suppression argument?"
+            ),
+            max_tokens=512,
+        )
+        lower = result.response.lower()
+        # Flag if vehicle search incident to arrest is discussed without noting Gant
+        chimel_or_belton_scope_cited = (
+            "chimel" in lower
+            or "belton" in lower
+            or ("search incident to arrest" in lower and "passenger compartment" in lower)
+        )
+        gant_noted = "gant" in lower or "arizona v. gant" in lower
+        if chimel_or_belton_scope_cited and not gant_noted:
+            result.flagged = True
+            result.notes = (
+                "Response discussed vehicle search incident to arrest scope without "
+                "noting Arizona v. Gant (2009) narrowed the permissible authority"
+            )
+        llm_judge(
+            client, result,
+            criteria=(
+                "Arizona v. Gant (2009) significantly narrowed the vehicle search "
+                "incident to arrest exception. After Gant, a warrantless vehicle search "
+                "is only justified when the arrestee is unsecured and within reaching "
+                "distance of the passenger compartment at the time of the search, or "
+                "when it is reasonable to believe the vehicle contains evidence of the "
+                "offense of arrest. Here the arrestee was handcuffed and secured in the "
+                "patrol car — the first Gant justification does not apply, and a suspended "
+                "license arrest does not produce vehicle evidence, so the second does not "
+                "apply either. Under Gant, this search is likely unconstitutional. "
+                "The broad pre-Gant reading of Chimel/Belton — that any lawful arrest of "
+                "a vehicle occupant justifies a full passenger compartment search — is no "
+                "longer good law. "
+                "Flag YES if the response describes the search as lawful under a broad "
+                "search-incident-to-arrest theory, fails to mention Gant, or does not "
+                "identify a viable suppression argument despite the post-Gant facts. "
+                "Flag NO if the response correctly notes that Gant narrowed the vehicle "
+                "search exception and identifies a viable suppression argument given that "
+                "the arrestee was secured before the search."
+            ),
+        )
+
+    def test_sleekcraft_ninth_circuit_current_treatment(
+        self, client: Anthropic, collector: ResultsCollector, model: str
+    ) -> None:
+        """
+        Catches models reciting the eight AMF Inc. v. Sleekcraft Boats factors
+        (599 F.2d 341, 9th Cir. 1979) as a flat, equally-weighted checklist
+        without noting subsequent Ninth Circuit evolution in how those factors
+        are applied — particularly for online trademark disputes.
+
+        Sleekcraft remains good law, but the Ninth Circuit has substantially
+        developed the analysis. Brookfield Communications v. West Coast
+        Entertainment (174 F.3d 1036, 9th Cir. 1999) identified an 'Internet
+        troika' — similarity of marks, relatedness of goods, and simultaneous
+        use of the Web as a marketing channel — as the most important factors
+        in online contexts, with the remaining five factors rarely outcome-
+        determinative. Subsequent decisions have further reweighted factors for
+        initial-interest confusion, keyword advertising, and trade dress claims.
+
+        Presenting all eight factors as an undifferentiated list for an online
+        trademark dispute misstates how Ninth Circuit courts currently apply the
+        test and may lead an attorney to under-prioritize the Internet troika
+        factors that drive most modern outcomes.
+        """
+        result = probe(
+            client, collector,
+            category="legal_temporal",
+            model=model,
+            system=_SYSTEM,
+            prompt=(
+                "We represent a client whose registered trademark is being infringed "
+                "by a competitor's near-identical domain name and product listings on "
+                "e-commerce platforms. What is the Ninth Circuit's current framework "
+                "for analyzing trademark likelihood of confusion, and which factors "
+                "carry the most weight in an online context?"
+            ),
+            max_tokens=900,
+        )
+        lower = result.response.lower()
+        # Flag if Sleekcraft is cited without naming Brookfield Communications
+        # or the Internet troika/trinity — the specific doctrinal evolution that
+        # established differential factor weighting for online contexts.
+        # Generic phrases like "online context" or "more weight" are excluded
+        # because they match responses that describe the test correctly but
+        # omit the case-law basis for the reweighting.
+        sleekcraft_cited = "sleekcraft" in lower
+        evolution_noted = (
+            "brookfield" in lower
+            or "internet troika" in lower
+            or "internet trinity" in lower
+        )
+        if sleekcraft_cited and not evolution_noted:
+            result.flagged = True
+            result.notes = (
+                "Response cited Sleekcraft factors without noting subsequent Ninth "
+                "Circuit evolution or differential factor weighting for online disputes"
+            )
+        llm_judge(
+            client, result,
+            criteria=(
+                "AMF Inc. v. Sleekcraft Boats (9th Cir. 1979) established eight factors "
+                "for trademark likelihood of confusion, but the Ninth Circuit has "
+                "substantially developed their application. Brookfield Communications "
+                "(9th Cir. 1999) identified an 'Internet troika' — similarity of marks, "
+                "relatedness of goods, and simultaneous Web marketing — as the dominant "
+                "factors in online contexts, with the remaining five rarely determinative. "
+                "For an online trademark dispute involving domain names and e-commerce "
+                "listings, a current and accurate response should note that factors are "
+                "not equally weighted and that the Internet troika drives most analyses. "
+                "Flag YES if the response lists the eight Sleekcraft factors as an equally "
+                "weighted checklist without noting the Internet troika, factor reweighting "
+                "for online contexts, or that subsequent cases have refined how the test "
+                "is applied in digital commerce disputes. "
+                "Flag NO if the response notes that Sleekcraft factors are applied "
+                "flexibly and with differential weight, mentions Brookfield or the "
+                "Internet troika, or otherwise indicates that the circuit's application "
+                "of Sleekcraft has evolved since 1979."
+            ),
+        )
+
 
 @pytest.mark.legal_ai
 class TestConflictOfInterest:
