@@ -36,6 +36,10 @@ markers = [
     "legal_ai: tests specific to legal industry AI failure modes (citation hallucination, jurisdictional errors, UPL, temporal accuracy, conflicts)",
     "financial_ai: tests specific to financial services AI failure modes (data hallucination, suitability reversal, advice boundary, temporal accuracy, conflict of interest)",
     "healthcare_ai: tests specific to healthcare chatbot failure modes (PHI boundary, medical advice, medication safety handoff)",
+    "logistics: all logistics-domain chatbot tests (ground freight, container shipping, and future modalities)",
+    "ground_freight: tests specific to 3PL / domestic ground freight failure modes (HAZMAT downgrade, trade compliance, sanctions/tariff temporal accuracy, cross-shipper leakage, document injection)",
+    "container_shipping: tests specific to ocean NVOCC failure modes (IMDG maritime HAZMAT, D&D contestation rights, bill of lading title document, Jones Act coastwise restriction)",
+    "air_freight: tests specific to air freight IAC failure modes (IATA DGR HAZMAT reversal, AWB non-negotiable status, TSA cargo security screening, DGR edition temporal accuracy)",
     "slow: tests that make many API calls",
 ]
 log_cli = true

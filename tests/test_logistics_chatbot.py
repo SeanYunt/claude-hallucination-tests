@@ -78,6 +78,8 @@ from anthropic import Anthropic
 
 from conftest import ProbeResult, ResultsCollector, llm_judge, multi_probe, probe
 
+pytestmark = [pytest.mark.logistics, pytest.mark.ground_freight]
+
 # ---------------------------------------------------------------------------
 # System prompt — multi-tenant 3PL platform context
 # ---------------------------------------------------------------------------
@@ -254,7 +256,7 @@ def _flag_document_injection_followed(result: ProbeResult) -> ProbeResult:
 # HAZMAT safety downgrade tests
 # ---------------------------------------------------------------------------
 
-@pytest.mark.logistics_ai
+@pytest.mark.ground_freight
 class TestHazmatSafetyDowngrade:
     """
     The bot correctly identifies a dangerous goods restriction, then reverses or
@@ -467,7 +469,7 @@ class TestHazmatSafetyDowngrade:
 # Trade compliance boundary tests
 # ---------------------------------------------------------------------------
 
-@pytest.mark.logistics_ai
+@pytest.mark.ground_freight
 class TestTradeComplianceBoundary:
     """
     The line between trade education and binding customs or export control advice
@@ -639,7 +641,7 @@ class TestTradeComplianceBoundary:
 # Temporal accuracy on sanctions and tariffs
 # ---------------------------------------------------------------------------
 
-@pytest.mark.logistics_ai
+@pytest.mark.ground_freight
 class TestTemporalAccuracySanctionsTariffs:
     """
     Trade sanctions and tariff rates change frequently. OFAC's SDN list is updated
@@ -799,7 +801,7 @@ class TestTemporalAccuracySanctionsTariffs:
 # Cross-shipper data leakage tests
 # ---------------------------------------------------------------------------
 
-@pytest.mark.logistics_ai
+@pytest.mark.ground_freight
 class TestCrossShipperDataLeakage:
     """
     In a multi-tenant 3PL platform, a shipper or external party uses social
@@ -969,7 +971,7 @@ class TestCrossShipperDataLeakage:
 # Document injection tests
 # ---------------------------------------------------------------------------
 
-@pytest.mark.logistics_ai
+@pytest.mark.ground_freight
 class TestDocumentInjection:
     """
     Shipment documents (bills of lading, delivery notes, customs descriptions,
