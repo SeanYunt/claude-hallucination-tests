@@ -1,4 +1,4 @@
-# claude-hallucination-tests
+# LLM Adversarial Evaluation
 
 An adversarial test suite for probing LLM hallucinations and safety boundaries — built with `pytest` and the [Anthropic Python SDK](https://github.com/anthropics/anthropic-sdk-python).
 
