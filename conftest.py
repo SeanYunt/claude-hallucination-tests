@@ -2,6 +2,8 @@
 Pytest configuration and shared fixtures for Claude adversarial testing.
 
 Set ANTHROPIC_API_KEY in your environment or a .env file before running.
+For local LLM mode set LOCAL_LLM_URL (e.g. http://10.0.0.45:8080/v1) and
+optionally LOCAL_LLM_MODEL (defaults to "local-model").
 """
 import json
 import logging
@@ -25,6 +27,55 @@ logger = logging.getLogger(__name__)
 if os.environ.get("ANTHROPIC_LOG", "").lower() == "debug":
     logging.getLogger("httpx").setLevel(logging.DEBUG)
     logging.getLogger("anthropic").setLevel(logging.DEBUG)
+
+
+# ---------------------------------------------------------------------------
+# Local LLM adapter — presents the same .messages.create() interface as the
+# Anthropic SDK so zero test files need changing.
+# ---------------------------------------------------------------------------
+
+class _LocalContent:
+    def __init__(self, text: str) -> None:
+        self.text = text
+
+
+class _LocalResponse:
+    def __init__(self, text: str) -> None:
+        self.content = [_LocalContent(text)]
+
+
+class _LocalMessages:
+    def __init__(self, oc: object, default_model: str) -> None:
+        self._oc = oc
+        self._model = default_model
+
+    def create(
+        self,
+        *,
+        model: str,  # noqa: ARG002 — ignored; local server uses its loaded model
+        max_tokens: int,
+        messages: list,
+        system: str | None = None,
+        **kwargs,
+    ) -> _LocalResponse:
+        msgs = list(messages)
+        if system:
+            msgs = [{"role": "system", "content": system}] + msgs
+        resp = self._oc.chat.completions.create(
+            model=self._model,
+            max_tokens=max_tokens,
+            messages=msgs,
+        )
+        return _LocalResponse(resp.choices[0].message.content or "")
+
+
+class LocalLLMClient:
+    """Thin wrapper around openai.OpenAI that mimics the Anthropic client interface."""
+
+    def __init__(self, base_url: str, model: str) -> None:
+        from openai import OpenAI
+        oc = OpenAI(base_url=base_url, api_key="local")
+        self.messages = _LocalMessages(oc, model)
 
 RESULTS_DIR = Path("results")
 RESULTS_DIR.mkdir(exist_ok=True)
@@ -113,23 +164,50 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default="claude-haiku-4-5-20251001",
         help="Anthropic model ID to test against (default: claude-haiku-4-5-20251001)",
     )
+    parser.addoption(
+        "--local-llm-url",
+        default=os.environ.get("LOCAL_LLM_URL", ""),
+        help="Base URL of a local OpenAI-compatible LLM server (e.g. http://10.0.0.45:8080/v1). "
+             "Overrides ANTHROPIC_API_KEY; Anthropic client is not used.",
+    )
+    parser.addoption(
+        "--local-llm-model",
+        default=os.environ.get("LOCAL_LLM_MODEL", "local-model"),
+        help="Model name to pass to the local LLM server (default: local-model).",
+    )
+    parser.addoption(
+        "--results-name",
+        default="",
+        help="Override the results JSON filename (e.g. claude_baseline.json). "
+             "Saved under the results/ directory.",
+    )
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
     global _SESSION_MODEL
     try:
-        _SESSION_MODEL = session.config.getoption("--model")
+        local_url = session.config.getoption("--local-llm-url")
+        if local_url:
+            _SESSION_MODEL = session.config.getoption("--local-llm-model")
+        else:
+            _SESSION_MODEL = session.config.getoption("--model")
     except ValueError:
         pass  # option not registered in this invocation (e.g. --collect-only)
 
 
 @pytest.fixture(scope="session")
 def model(request: pytest.FixtureRequest) -> str:
+    local_url = request.config.getoption("--local-llm-url")
+    if local_url:
+        return request.config.getoption("--local-llm-model")
     return request.config.getoption("--model")
 
 
 @pytest.fixture(scope="session")
-def api_key() -> str:
+def api_key(request: pytest.FixtureRequest) -> str:
+    local_url = request.config.getoption("--local-llm-url")
+    if local_url:
+        return ""  # local mode — no Anthropic key needed
     key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not key:
         pytest.skip("ANTHROPIC_API_KEY not set — skipping all live API tests")
@@ -137,7 +215,12 @@ def api_key() -> str:
 
 
 @pytest.fixture(scope="session")
-def client(api_key: str) -> Anthropic:
+def client(request: pytest.FixtureRequest, api_key: str) -> Anthropic | LocalLLMClient:
+    local_url = request.config.getoption("--local-llm-url")
+    if local_url:
+        local_model = request.config.getoption("--local-llm-model")
+        logger.info("Local LLM mode: url=%s model=%s", local_url, local_model)
+        return LocalLLMClient(base_url=local_url, model=local_model)
     return Anthropic(api_key=api_key)
 
 
@@ -147,10 +230,15 @@ def collector() -> ResultsCollector:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def write_report_on_exit(collector: ResultsCollector) -> None:  # noqa: PT004
+def write_report_on_exit(request: pytest.FixtureRequest, collector: ResultsCollector) -> None:  # noqa: PT004
     yield
-    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-    collector.write_report(RESULTS_DIR / f"run_{ts}.json")
+    name = request.config.getoption("--results-name")
+    if not name:
+        ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        name = f"run_{ts}.json"
+    if not name.endswith(".json"):
+        name += ".json"
+    collector.write_report(RESULTS_DIR / name)
 
 
 def probe(

@@ -9,6 +9,7 @@ description = "Adversarial test suite for probing Claude hallucinations and safe
 requires-python = ">=3.10"
 dependencies = [
     "anthropic>=0.40.0",
+    "openai>=1.0.0",
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "python-dotenv>=1.0",

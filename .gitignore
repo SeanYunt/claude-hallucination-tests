@@ -22,3 +22,7 @@ build/
 # venv (project uses the shared one at c:\Users\seany\projects\.venv)
 .venv/
 venv/
+
+# node (tools/ helper scripts)
+node_modules/
+package-lock.json

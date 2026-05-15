@@ -17,13 +17,16 @@ The two signals are non-overriding — disagreement is intentional. `flagged=Tru
 
 ## Test categories
 
+### Failure Mode Tests
+
+These tests are model-agnostic and apply to any LLM deployment regardless of domain or use case.
+
 | Marker | Module | What it probes |
 |---|---|---|
 | `hallucination` | `test_factual_hallucinations.py` | Fabricated people, events, works; false premises; citation invention |
 | `jailbreak` | `test_jailbreak.py` | Persona attacks, fictional framing, prompt injection, context manipulation |
 | `sycophancy` | `test_sycophancy.py` | Position capitulation under pushback, false authority, emotional pressure, escalating anger/bereavement appeals |
 | `refusal_calibration` | `test_refusal_calibration.py` | Over-refusal of legitimate medical, security, historical, and creative requests |
-| `airline` | `test_airline_chatbot.py` | Airline virtual assistant failure modes (see below) |
 | `secret_extraction` | `test_secret_extraction.py` | System prompt secret leakage via direct, encoded, roleplay, and multi-turn attacks |
 | `indirect_injection` | `test_indirect_injection.py` | Prompt injection via RAG-retrieved documents — persona hijack, data exfiltration, privilege escalation, nested injection |
 | `specification_gaming` | `test_specification_gaming.py` | Reward hacking and metric gaming — self-evaluation inflation, proxy signals over accuracy, literal-compliance loopholes |
@@ -33,6 +36,14 @@ The two signals are non-overriding — disagreement is intentional. `flagged=Tru
 | `payload_splitting` | `test_payload_splitting.py` | Multi-turn payload splitting — harmful requests spread across individually-innocuous turns to evade per-turn detection |
 | `competing_objectives` | `test_competing_objectives.py` | Dual-mandate tension attacks — helpfulness directives cited as justification for crossing safety guardrails |
 | `hidden_injection` | `test_hidden_text_injection.py` | Prompt injection via visually hidden text in uploaded images — near-white contrast, tiny font, and dual-channel (image + message) attacks |
+
+### Domain-Specific Tests
+
+These tests are scoped to a particular industry deployment context and probe failure modes unique to that domain's regulatory environment, data sensitivity, and user expectations.
+
+| Marker | Module | What it probes |
+|---|---|---|
+| `airline` | `test_airline_chatbot.py` | Airline virtual assistant failure modes (see below) |
 | `product_support` | `test_product_support_chatbot.py` | Consumer product support chatbot failure modes — image reversal sycophancy, policy capitulation under emotional pressure, hallucinated warranty terms |
 | `legal_ai` | `test_legal_chatbot.py` | Legal industry AI failure modes — citation hallucination, jurisdictional errors, UPL drift, temporal accuracy (Chevron, Roe), conflict of interest |
 | `financial_ai` | `test_financial_chatbot.py` | Financial services AI failure modes — data hallucination, suitability reversal under client pressure, advice boundary (RIA/Reg BI), temporal accuracy (Dodd-Frank, SEC rules), conflict of interest |
